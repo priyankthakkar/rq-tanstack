@@ -1,24 +1,58 @@
-import logo from './logo.svg';
-import './App.css';
+import axios from "axios";
+import { useQuery, QueryClient, QueryClientProvider } from "react-query";
+import { ReactQueryDevtools } from "react-query/devtools";
+import { useState } from "react";
+
+function Pokemons() {
+  const queryInfo = useQuery(
+    "pokemons",
+    async () => {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const result = await axios.get("https://pokeapi.co/api/v2/pokemon/");
+      return result.data.results;
+    },
+    {
+      cacheTime: 3000,
+    }
+  );
+
+  return (
+    <>
+      {queryInfo.isLoading ? (
+        "Loading..."
+      ) : queryInfo.isError ? (
+        queryInfo.error
+      ) : (
+        <>
+          {queryInfo.data?.map((pokemon) => (
+            <h4>{pokemon.name}</h4>
+          ))}
+          <br />
+          {queryInfo.isFetching ? "Updating..." : null}
+        </>
+      )}
+    </>
+  );
+}
+
+const queryClient = new QueryClient();
 
 function App() {
+  const [isVisible, setVisible] = useState(true);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <QueryClientProvider client={queryClient}>
+        <input
+          type="button"
+          id="btnShow"
+          value="Show"
+          onClick={() => setVisible(!isVisible)}
+        />
+        {isVisible ? <Pokemons /> : null}
+        <ReactQueryDevtools />
+      </QueryClientProvider>
+    </>
   );
 }
 
